@@ -3,16 +3,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
-from configs.paths import REPORTS_DIR
+from configs.paths import METRICS_DIR, FIGURES_DIR
 
 def generate_comparison_report():
     print("\n[Generating Comparison Report]")
-    REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    METRICS_DIR.mkdir(parents=True, exist_ok=True)
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
     
     # Read all json files in REPORTS_DIR
-    report_files = list(REPORTS_DIR.glob("*_report.json"))
+    report_files = list(METRICS_DIR.glob("*_report.json"))
     if not report_files:
-        print("No report files found in", REPORTS_DIR)
+        print("No report files found in", METRICS_DIR)
         return
 
     data = []
@@ -66,7 +67,7 @@ def generate_comparison_report():
     df = pd.DataFrame(data)
     
     # 1. Save table to CSV
-    csv_path = REPORTS_DIR / "model_comparison_table.csv"
+    csv_path = METRICS_DIR / "model_comparison_table.csv"
     df.to_csv(csv_path, index=False)
     print(f"Saved comparison table to {csv_path}")
     
@@ -84,8 +85,8 @@ def generate_comparison_report():
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.tight_layout()
     
-    chart_path = REPORTS_DIR / "model_comparison_chart.png"
-    plt.savefig(chart_path)
+    chart_path = FIGURES_DIR / "model_comparison_chart.png"
+    plt.savefig(chart_path, dpi=300)
     plt.close()
     print(f"Saved comparison chart to {chart_path}")
     

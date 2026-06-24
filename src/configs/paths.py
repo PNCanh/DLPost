@@ -5,6 +5,14 @@ Tự động phát hiện môi trường (Local hoặc Google Colab) và thiết
 
 - Local: Dùng đường dẫn tương đối từ project root
 - Colab: Dùng Google Drive paths cho dataset/outputs (persistent storage)
+
+Output structure:
+├── outputs/
+│   ├── checkpoints/        ← model weights (.pth, .h5)
+│   ├── logs/               ← training logs
+│   └── predictions/        ← kết quả dự đoán
+│       ├── figures/        ← biểu đồ, charts
+│       └── metrics/        ← file CSV kết quả
 """
 
 import os
@@ -63,7 +71,7 @@ PROCESSED_DIR = (
 
 SPLIT_DIR = (
     DATASET_DIR /
-    "split"
+    "splitted"
 )
 
 # =========================
@@ -73,21 +81,6 @@ SPLIT_DIR = (
 CHECKPOINTS_DIR = (
     OUTPUT_DIR /
     "checkpoints"
-)
-
-CONFUSION_MATRIX_DIR = (
-    OUTPUT_DIR /
-    "confusion_matrix"
-)
-
-EXPLANATIONS_DIR = (
-    OUTPUT_DIR /
-    "explanations"
-)
-
-REPORTS_DIR = (
-    OUTPUT_DIR /
-    "reports"
 )
 
 LOGS_DIR = (
@@ -101,7 +94,7 @@ PREDICTIONS_DIR = (
 )
 
 FIGURES_DIR = (
-    OUTPUT_DIR /
+   OUTPUT_DIR /
     "figures"
 )
 
@@ -266,9 +259,6 @@ def ensure_directories():
         SPLIT_DIR,
         OUTPUT_DIR,
         CHECKPOINTS_DIR,
-        CONFUSION_MATRIX_DIR,
-        EXPLANATIONS_DIR,
-        REPORTS_DIR,
         LOGS_DIR,
         PREDICTIONS_DIR,
         FIGURES_DIR,

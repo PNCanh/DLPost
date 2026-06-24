@@ -126,10 +126,10 @@ class BaseTrainer(ABC):
         
         # Setup logging file
         from datetime import datetime
-        now_str = datetime.now().strftime("%m%H%M%d%y")
-        # Go up from src/trainers/trainer.py -> src/trainers -> src -> DLPost
-        project_dir = Path(__file__).resolve().parents[2]
-        self.logs_dir = project_dir / "outputs" / "logs"
+        from configs.paths import LOGS_DIR
+        now_str = datetime.now().strftime("%M%H%d%m%y")
+        # Dùng LOGS_DIR từ paths config (auto-detect Colab/Local)
+        self.logs_dir = LOGS_DIR
         self.logs_dir.mkdir(parents=True, exist_ok=True)
         self.log_file = self.logs_dir / f"{model_name}_{now_str}.log"
         

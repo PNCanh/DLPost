@@ -1,28 +1,6 @@
 """
 Model Configurations
 
-Định nghĩa cấu hình chi tiết cho các components của models, losses, optimizer và fusion.
-
-=== POOLING STRATEGY (Nhóm 1 - Cách lấy vector đặc trưng) ===
-- "cls": Dùng CLS token (mặc định, baseline)
-- "attention_pooling": Attention-weighted sum toàn bộ token hidden states (1 điểm)
-- "gated_cls": Kết hợp CLS + attention pooling qua learned gate (1 điểm)
-
-=== FUSION STRATEGY ===
-- "concat": Nối text + image features đơn giản
-- "attention": Attention fusion giữa text và image
-- "gated": Gated fusion giữa text và image
-- "conditional_attention": Attention phụ thuộc aspect/keyword (2 điểm)
-
-=== LOSS TYPE (Nhóm 2) ===
-- "ce": CrossEntropyLoss
-- "bce": BCEWithLogitsLoss
-- "focal": FocalLoss multiclass (2 điểm)
-- "binary_focal": FocalLoss binary
-- "weighted_ce": CE với class weights thủ công
-- "risk_weighted_ce": CE với weights tự tính từ risk_level (1 điểm)
-- "weighted_bce": BCE với pos_weight/confidence
-- "gated": true → GatedMultiTaskLoss, mask loss khi legitimate (1 điểm)
 """
 
 # Cấu hình đầy đủ cho một pipeline multimodal
@@ -49,9 +27,9 @@ TRAINING_CONFIGS = {
         },
         "training": {
             "learning_rate": 2e-5,
-            "batch_size": 4,
+            "batch_size": 16,
             "epochs": 10,
-            "early_stopping": 5,
+            "early_stopping": 8,
             "mixed_precision": True,
             "checkpoint_dir": "checkpoints"
         }
@@ -61,7 +39,7 @@ TRAINING_CONFIGS = {
     # NHÓM 1: THAY CÁCH LẤY VECTOR ĐẶC TRƯNG
     # ============================================================
 
-    # --- Attention Pooling (1 điểm) ---
+    # --- Attention Pooling ---
     # Thay CLS vector bằng attention-weighted sum toàn bộ hidden states
     "attention_pooling": {
         "run_name": "attn_pool_attention_ce",
@@ -81,15 +59,15 @@ TRAINING_CONFIGS = {
         },
         "training": {
             "learning_rate": 2e-5,
-            "batch_size": 4,
+            "batch_size": 16,
             "epochs": 10,
-            "early_stopping": 5,
+            "early_stopping": 8,
             "mixed_precision": True,
             "checkpoint_dir": "checkpoints"
         }
     },
 
-    # --- Gated CLS + Attention Pooling (1 điểm) ---
+    # --- Gated CLS + Attention Pooling ---
     # Kết hợp CLS và attention pooling qua learned gate
     "gated_cls_pooling": {
         "run_name": "gated_cls_gated_ce",
@@ -109,15 +87,15 @@ TRAINING_CONFIGS = {
         },
         "training": {
             "learning_rate": 2e-5,
-            "batch_size": 4,
+            "batch_size": 16,
             "epochs": 10,
-            "early_stopping": 5,
+            "early_stopping": 8,
             "mixed_precision": True,
             "checkpoint_dir": "checkpoints"
         }
     },
 
-    # --- Conditional Attention (2 điểm) ---
+    # --- Conditional Attention ---
     # Vector w phụ thuộc vào aspect (keyword_vector)
     "conditional_attention": {
         "run_name": "cls_cond_attn_ce",
@@ -137,9 +115,9 @@ TRAINING_CONFIGS = {
         },
         "training": {
             "learning_rate": 2e-5,
-            "batch_size": 4,
+            "batch_size": 16,
             "epochs": 10,
-            "early_stopping": 5,
+            "early_stopping": 8,
             "mixed_precision": True,
             "checkpoint_dir": "checkpoints"
         }
@@ -170,15 +148,15 @@ TRAINING_CONFIGS = {
         },
         "training": {
             "learning_rate": 2e-5,
-            "batch_size": 4,
+            "batch_size": 16,
             "epochs": 10,
-            "early_stopping": 5,
+            "early_stopping": 8,
             "mixed_precision": True,
             "checkpoint_dir": "checkpoints"
         }
     },
 
-    # --- Weighted Loss (1 điểm) ---
+    # --- Weighted Loss ---
     # Class weights dựa trên risk_level từ label metadata
     "weighted_loss": {
         "run_name": "cls_attention_weighted_loss",
@@ -209,15 +187,15 @@ TRAINING_CONFIGS = {
         },
         "training": {
             "learning_rate": 2e-5,
-            "batch_size": 4,
+            "batch_size": 16,
             "epochs": 10,
-            "early_stopping": 5,
+            "early_stopping": 8,
             "mixed_precision": True,
             "checkpoint_dir": "checkpoints"
         }
     },
 
-    # --- Focal Loss (2 điểm) ---
+    # --- Focal Loss ---
     # Tăng trọng số mẫu khó, giảm ảnh hưởng mẫu dễ
     "focal_loss": {
         "run_name": "cls_attention_focal_loss",
@@ -249,9 +227,9 @@ TRAINING_CONFIGS = {
         },
         "training": {
             "learning_rate": 1e-5,
-            "batch_size": 4,
+            "batch_size": 16,
             "epochs": 10,
-            "early_stopping": 5,
+            "early_stopping": 8,
             "mixed_precision": True,
             "checkpoint_dir": "checkpoints"
         }
@@ -280,9 +258,9 @@ TRAINING_CONFIGS = {
         },
         "training": {
             "learning_rate": 1e-5,
-            "batch_size": 4,
+            "batch_size": 16,
             "epochs": 10,
-            "early_stopping": 5,
+            "early_stopping": 8,
             "mixed_precision": True,
             "checkpoint_dir": "checkpoints"
         }
@@ -311,9 +289,9 @@ TRAINING_CONFIGS = {
         },
         "training": {
             "learning_rate": 1e-5,
-            "batch_size": 4,
+            "batch_size": 16,
             "epochs": 10,
-            "early_stopping": 5,
+            "early_stopping": 8,
             "mixed_precision": True,
             "checkpoint_dir": "checkpoints"
         }
@@ -350,6 +328,18 @@ Nhóm 2: Thay hàm loss
   Module: src/losses/focal_loss.py
   Tăng trọng số mẫu khó (1-pt)^gamma, giảm ảnh hưởng mẫu dễ.
 """
-
-# Default config fallback
-DEFAULT_CONFIG = TRAINING_CONFIGS["baseline"]
+# ============================================================
+# CHỌN CÁC CONFIG ĐỂ TRAIN KHI CHẠY main.py
+# Thêm/bớt tên config trong list này để chọn model cần train
+# ============================================================
+DEFAULT_CONFIGS = [
+    "baseline",
+    # "attention_pooling",
+    # "gated_cls_pooling",
+    # "conditional_attention",
+    # "gated_loss",
+    # "weighted_loss",
+    # "focal_loss",
+    # "modelSetting1",
+    # "modelSetting2",
+]

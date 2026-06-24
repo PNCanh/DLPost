@@ -17,7 +17,7 @@ from trainers.trainer_multimodal import MultimodalTrainer
 from trainers.trainer_image import ImageTrainer
 from evaluators.evaluator import ClassificationEvaluator
 from configs import paths
-from configs.model_config import TRAINING_CONFIGS
+from configs.model_config import TRAINING_CONFIGS, DEFAULT_CONFIGS
 from evaluators.model_comparator import generate_comparison_report
 
 def train_and_evaluate_single_config(config_name, config, train_df, val_df, test_df, image_train_df, image_val_df, image_test_df, device):
@@ -25,7 +25,7 @@ def train_and_evaluate_single_config(config_name, config, train_df, val_df, test
     print(f"=== RUNNING CONFIG: {config_name} ===")
     print(f"{'='*50}")
 
-    timestamp = datetime.now().strftime("%m%H%M%d%y")
+    timestamp = datetime.now().strftime("%M%H%d%m%y")
     model_name = f"{config.get('text_model', 'text')}_{config.get('image_model', 'img')}_{config.get('fusion_strategy', 'fusion')}"
     config['run_timestamp'] = timestamp
     config['model_name'] = model_name
@@ -144,6 +144,9 @@ def main():
 
     if torch.cuda.is_available():
         print(torch.cuda.get_device_name(0))
+    
+    # Tạo thư mục cần thiết
+    paths.ensure_directories()
         
     print("\n=== STEP 1: EXTRACT TEXT VIA OCR ===")
     OCRHandle().process_all(paths.RAW_DIR)
@@ -175,8 +178,15 @@ def main():
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
-    print("\n=== STEP 6: TRAIN ALL CONFIGS ===")
-    for config_name, config in TRAINING_CONFIGS.items():
+    # Chỉ train các configs được chọn trong DEFAULT_CONFIGS
+    print(f"\n=== STEP 6: TRAIN SELECTED CONFIGS ({len(DEFAULT_CONFIGS)}) ===")
+    print(f"Selected: {DEFAULT_CONFIGS}")
+    
+    for config_name in DEFAULT_CONFIGS:
+        if config_name not in TRAINING_CONFIGS:
+            print(f"⚠️  Config '{config_name}' not found in TRAINING_CONFIGS, skipping.")
+            continue
+        config = TRAINING_CONFIGS[config_name]
         train_and_evaluate_single_config(
             config_name, config, 
             train_df, val_df, test_df, 
