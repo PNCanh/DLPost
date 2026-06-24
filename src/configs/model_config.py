@@ -136,6 +136,6 @@ TRAINING_CONFIGS = {
 
 DEFAULT_CONFIGS = [
     "baseline",
-    # "production_candidate",
-    # "best_experiment"
+    "production_candidate",
+    "best_experiment"
 ]
