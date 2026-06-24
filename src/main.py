@@ -66,16 +66,30 @@ def train_and_evaluate_single_config(config_name, config, train_df, val_df, test
                 "is_scam": pred_label != 0
             })
 
+    # Giải phóng GPU memory của multimodal model để tránh tràn VRAM
+    import gc
+    del model
+    del optimizer
+    del trainer
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+    gc.collect()
+
     print("\n--- TRAIN & EVALUATE INDEPENDENT IMAGE MODEL ---")
+    print(f"Image Dataset sizes: Train={len(image_train_df)}, Val={len(image_val_df)}, Test={len(image_test_df)}")
+    
     image_train_loader, image_val_loader, image_test_loader = get_image_dataloaders(
         config, image_train_df, image_val_df, image_test_df
     )
     
     image_model_name = config.get("image_model", "resnet")
+    print(f"Building independent image model '{image_model_name}'...")
     if image_model_name == "resnet":
+        print("Note: If running for the first time, this may download ~100MB ResNet50 weights from PyTorch Hub.")
         from models.image_models.resnet import ResNetClassifier
         image_model = ResNetClassifier(num_multiclass=8, num_explanations=10).to(device)
     else:
+        print("Note: If running for the first time, this may download ~350MB ViT weights from Hugging Face.")
         from models.image_models.vit import ViTClassifier
         image_model = ViTClassifier(num_multiclass=8, num_explanations=10).to(device)
         
@@ -136,6 +150,14 @@ def train_and_evaluate_single_config(config_name, config, train_df, val_df, test
     )
     mock_metrics = {"train_loss": [], "val_loss": []}
     evaluator.evaluate(formatted_preds, mock_metrics)
+
+    # Giải phóng GPU memory của image model
+    del image_model
+    del image_optimizer
+    del image_trainer
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+    gc.collect()
 
 def main():
     print(torch.__version__)

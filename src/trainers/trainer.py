@@ -104,6 +104,8 @@ class BaseTrainer(ABC):
 
         self.val_loader = val_loader
 
+        if isinstance(device, str):
+            device = torch.device(device)
         self.device = device
 
         self.config = config
@@ -157,7 +159,7 @@ class BaseTrainer(ABC):
         ].get(
             "mixed_precision",
             True
-        )
+        ) and (self.device.type == 'cuda')
 
         self.scaler = (
             torch.amp.GradScaler('cuda')
@@ -325,14 +327,13 @@ class BaseTrainer(ABC):
                 break
 
     def train_epoch(self):
-
+        from tqdm import tqdm
         self.model.train()
 
         total_loss = 0.0
 
-        for batch in (
-            self.train_loader
-        ):
+        pbar = tqdm(self.train_loader, desc="   Training Batches", leave=False)
+        for batch in pbar:
 
             self.optimizer.zero_grad()
 
@@ -373,6 +374,7 @@ class BaseTrainer(ABC):
             total_loss += (
                 loss.item()
             )
+            pbar.set_postfix(loss=f"{loss.item():.4f}")
 
         return (
 
@@ -383,16 +385,15 @@ class BaseTrainer(ABC):
         )
 
     def validate_epoch(self):
-
+        from tqdm import tqdm
         self.model.eval()
 
         total_loss = 0.0
 
         with torch.no_grad():
 
-            for batch in (
-                self.val_loader
-            ):
+            pbar = tqdm(self.val_loader, desc="   Validation Batches", leave=False)
+            for batch in pbar:
 
                 loss_dict = (
                     self._compute_loss(
@@ -404,6 +405,7 @@ class BaseTrainer(ABC):
                 total_loss += (
                     loss.item()
                 )
+                pbar.set_postfix(loss=f"{loss.item():.4f}")
 
         return (
 
