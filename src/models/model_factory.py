@@ -1,3 +1,14 @@
+"""
+Model Factory
+
+Factory để khởi tạo model multimodal dựa trên cấu hình từ model_config.py.
+
+Hỗ trợ:
+- Text models: phobert, vibert, xlmr (với pooling_strategy: cls, attention_pooling, gated_cls)
+- Image models: resnet, vit
+- Fusion strategies: concat, attention, gated, conditional_attention
+"""
+
 import torch
 import torch.nn as nn
 
@@ -14,23 +25,39 @@ from models.image_models.vit import ViTClassifier
 from models.fusion.attention import AttentionFusion
 from models.fusion.conditional_attention import ConditionalAttentionFusion
 from models.fusion.gated import GatedFusion
-# Nếu có concat fusion, có thể tự định nghĩa hoặc dùng mặc định.
+
 
 class MultimodalModel(nn.Module):
     """
     Mô hình kết hợp (Multimodal) tự động khởi tạo dựa trên model_config.
+    
+    Hỗ trợ cấu hình linh hoạt:
+    - pooling_strategy: Cách lấy vector đặc trưng từ text encoder
+    - fusion_strategy: Cách kết hợp text + image features
     """
     def __init__(self, config, num_multiclass=8, num_explanations=10):
         super().__init__()
         
+        # Lấy pooling strategy từ config
+        pooling_strategy = config.get("pooling_strategy", "cls")
+        
         # 1. Text Model
         text_model_name = config.get("text_model", "phobert")
         if text_model_name == "phobert":
-            self.text_model = PhoBERTClassifier("vinai/phobert-base", num_multiclass, num_explanations)
+            self.text_model = PhoBERTClassifier(
+                "vinai/phobert-base", num_multiclass, num_explanations,
+                pooling_strategy=pooling_strategy
+            )
         elif text_model_name == "vibert":
-            self.text_model = ViBERTClassifier("FPTAI/vibert-base-cased", num_multiclass, num_explanations)
+            self.text_model = ViBERTClassifier(
+                "FPTAI/vibert-base-cased", num_multiclass, num_explanations,
+                pooling_strategy=pooling_strategy
+            )
         elif text_model_name == "xlmr":
-            self.text_model = XLMRClassifier("xlm-roberta-base", num_multiclass, num_explanations)
+            self.text_model = XLMRClassifier(
+                "xlm-roberta-base", num_multiclass, num_explanations,
+                pooling_strategy=pooling_strategy
+            )
         else:
             raise ValueError(f"Unknown text model: {text_model_name}")
             
@@ -44,14 +71,12 @@ class MultimodalModel(nn.Module):
             raise ValueError(f"Unknown image model: {image_model_name}")
 
         # Lấy feature_dim (thường là 768 cho BERT/ViT, 2048 cho ResNet50)
-        # Để đơn giản, giả sử chúng ta thêm một linear projection nếu dim không khớp, 
-        # nhưng ở đây tạm dùng mặc định 768 (nếu ViT và PhoBERT).
         self.feature_dim = 768 
         
         # 3. Fusion Strategy
         fusion_strategy = config.get("fusion_strategy", "concat")
         self.fusion_strategy = fusion_strategy
-        self.keyword_dim = 44 # Dựa trên cấu trúc mới của scam_keywords.json
+        self.keyword_dim = config.get("keyword_dim", 44)  # Dựa trên cấu trúc scam_keywords.json
         
         if fusion_strategy == "attention":
             self.fusion = AttentionFusion(self.feature_dim, num_multiclass, num_explanations, keyword_dim=self.keyword_dim)

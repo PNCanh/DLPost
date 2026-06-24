@@ -127,7 +127,7 @@ class BaseTrainer(ABC):
         # Setup logging file
         from datetime import datetime
         now_str = datetime.now().strftime("%m%H%M%d%y")
-        # Go up from src/trainers/trainer.py -> src/trainers -> src -> SSPostDetected
+        # Go up from src/trainers/trainer.py -> src/trainers -> src -> DLPost
         project_dir = Path(__file__).resolve().parents[2]
         self.logs_dir = project_dir / "outputs" / "logs"
         self.logs_dir.mkdir(parents=True, exist_ok=True)

@@ -1,19 +1,43 @@
+"""
+Path Configuration
+
+Tự động phát hiện môi trường (Local hoặc Google Colab) và thiết lập paths phù hợp.
+
+- Local: Dùng đường dẫn tương đối từ project root
+- Colab: Dùng Google Drive paths cho dataset/outputs (persistent storage)
+"""
+
+import os
 from pathlib import Path
 
-ROOT_DIR = (
-    Path(__file__)
-    .resolve()
-    .parents[2]
-)
+# =========================
+# Auto-detect Environment
+# =========================
+
+IS_COLAB = bool(os.environ.get("COLAB_RELEASE_TAG"))
+
+if IS_COLAB:
+    # Trên Colab: code ở /content/DLPost, data ở GDrive
+    ROOT_DIR = Path("/content/DLPost")
+    GDRIVE_ROOT = Path("/content/drive/MyDrive/DLPost")
+    
+    # Dataset và outputs nằm trên GDrive (persistent)
+    DATASET_DIR = GDRIVE_ROOT / "dataset"
+    OUTPUT_DIR = GDRIVE_ROOT / "outputs"
+else:
+    # Local: mọi thứ nằm trong project root
+    ROOT_DIR = (
+        Path(__file__)
+        .resolve()
+        .parents[2]
+    )
+    
+    DATASET_DIR = ROOT_DIR / "dataset"
+    OUTPUT_DIR = ROOT_DIR / "outputs"
 
 # =========================
 # Dataset
 # =========================
-
-DATASET_DIR = (
-    ROOT_DIR /
-    "dataset"
-)
 
 RAW_DIR = (
     DATASET_DIR /
@@ -46,11 +70,6 @@ SPLIT_DIR = (
 # Output
 # =========================
 
-OUTPUT_DIR = (
-    ROOT_DIR /
-    "outputs"
-)
-
 CHECKPOINTS_DIR = (
     OUTPUT_DIR /
     "checkpoints"
@@ -69,6 +88,26 @@ EXPLANATIONS_DIR = (
 REPORTS_DIR = (
     OUTPUT_DIR /
     "reports"
+)
+
+LOGS_DIR = (
+    OUTPUT_DIR /
+    "logs"
+)
+
+PREDICTIONS_DIR = (
+    OUTPUT_DIR /
+    "predictions"
+)
+
+FIGURES_DIR = (
+    OUTPUT_DIR /
+    "figures"
+)
+
+METRICS_DIR = (
+    OUTPUT_DIR /
+    "metrics"
 )
 
 # =========================
@@ -211,3 +250,29 @@ IMAGE_TEST_PARQUET_FILE = (
     SPLIT_DIR /
     "image_test.parquet"
 )
+
+
+def ensure_directories():
+    """
+    Tạo tất cả thư mục cần thiết nếu chưa tồn tại.
+    Gọi hàm này khi khởi tạo pipeline.
+    """
+    dirs = [
+        DATASET_DIR,
+        RAW_DIR,
+        RAW_IMAGES_DIR,
+        RESOURCE_DIR,
+        PROCESSED_DIR,
+        SPLIT_DIR,
+        OUTPUT_DIR,
+        CHECKPOINTS_DIR,
+        CONFUSION_MATRIX_DIR,
+        EXPLANATIONS_DIR,
+        REPORTS_DIR,
+        LOGS_DIR,
+        PREDICTIONS_DIR,
+        FIGURES_DIR,
+        METRICS_DIR,
+    ]
+    for d in dirs:
+        d.mkdir(parents=True, exist_ok=True)
