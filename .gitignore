@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.env
+
+# Dataset & Outputs (lưu trên GDrive, không commit lên GitHub)
+dataset/
+outputs/
+data/*.csv
+data/*.json
+data/*.pkl
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Model weights (file lớn)
+*.pth
+*.pt
+*.h5
+*.ckpt
+*.pkl
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/

@@ -19,6 +19,8 @@ from configs.paths import PREDICTIONS_DIR, FIGURES_DIR, METRICS_DIR
 from evaluators.metrics import compute_metrics
 from evaluators.classification_report import generate_classification_report
 from evaluators.confusion_matrix import generate_confusion_matrix
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 class ClassificationEvaluator:
     """
@@ -38,7 +40,13 @@ class ClassificationEvaluator:
         self.run_name = run_name
         self.model_name = model_name
         # Format: MMHHddmmyy
-        self.timestamp = timestamp if timestamp else datetime.now().strftime("%M%H%d%m%y")
+        self.timestamp = (
+    timestamp
+    if timestamp
+    else datetime.now(
+        ZoneInfo("Asia/Ho_Chi_Minh")
+    ).strftime("%M%H_%d%m%Y")
+)
         
         # File prefix: model_name + timestamp
         self.file_prefix = f"{self.model_name}_{self.timestamp}"
