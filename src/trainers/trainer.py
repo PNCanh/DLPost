@@ -165,6 +165,87 @@ class BaseTrainer(ABC):
             else None
         )
 
+        # Setup scheduler + warmup
+        self.scheduler = self._build_scheduler()
+
+    def _build_scheduler(self):
+        """
+        Build learning rate scheduler từ config.
+        
+        Supported schedulers:
+        - "cosine": CosineAnnealingLR với warmup
+        - "linear": LinearLR decay
+        - "step": StepLR (giảm LR mỗi N epochs)
+        - None: Không dùng scheduler
+        """
+        from torch.optim.lr_scheduler import (
+            CosineAnnealingLR,
+            LinearLR,
+            StepLR,
+            SequentialLR
+        )
+
+        training_config = self.config["training"]
+        scheduler_type = training_config.get("scheduler", None)
+        warmup_ratio = training_config.get("warmup_ratio", 0.0)
+
+        if scheduler_type is None:
+            return None
+
+        # Tính số steps warmup
+        total_steps = self.num_epochs
+        warmup_steps = max(1, int(total_steps * warmup_ratio))
+        main_steps = total_steps - warmup_steps
+
+        if scheduler_type == "cosine":
+            if warmup_ratio > 0:
+                # Warmup: tăng LR từ 0 → LR ban đầu trong warmup_steps epochs
+                warmup_scheduler = LinearLR(
+                    self.optimizer,
+                    start_factor=0.01,
+                    end_factor=1.0,
+                    total_iters=warmup_steps
+                )
+                # Cosine: giảm LR từ LR ban đầu → 0 trong main_steps epochs
+                cosine_scheduler = CosineAnnealingLR(
+                    self.optimizer,
+                    T_max=max(1, main_steps),
+                    eta_min=1e-7
+                )
+                # Kết hợp: warmup trước, cosine sau
+                return SequentialLR(
+                    self.optimizer,
+                    schedulers=[warmup_scheduler, cosine_scheduler],
+                    milestones=[warmup_steps]
+                )
+            else:
+                return CosineAnnealingLR(
+                    self.optimizer,
+                    T_max=total_steps,
+                    eta_min=1e-7
+                )
+
+        elif scheduler_type == "linear":
+            return LinearLR(
+                self.optimizer,
+                start_factor=1.0,
+                end_factor=0.01,
+                total_iters=total_steps
+            )
+
+        elif scheduler_type == "step":
+            step_size = training_config.get("step_size", 5)
+            gamma = training_config.get("gamma", 0.5)
+            return StepLR(
+                self.optimizer,
+                step_size=step_size,
+                gamma=gamma
+            )
+
+        else:
+            print(f"⚠️  Unknown scheduler: {scheduler_type}, skipping.")
+            return None
+
     def fit(self):
 
         for epoch in range(
@@ -179,6 +260,12 @@ class BaseTrainer(ABC):
             val_loss = (
                 self.validate_epoch()
             )
+
+            # Step scheduler (per-epoch)
+            current_lr = self.optimizer.param_groups[0]['lr']
+            if self.scheduler is not None:
+                self.scheduler.step()
+            new_lr = self.optimizer.param_groups[0]['lr']
             
             # Log to terminal
             print(
@@ -196,10 +283,14 @@ class BaseTrainer(ABC):
                 f"Val Loss: "
                 f"{val_loss:.4f}"
             )
+
+            print(
+                f"LR: {current_lr:.2e} → {new_lr:.2e}"
+            )
             
             # Write to log file
             with open(self.log_file, "a", encoding="utf-8") as f:
-                f.write(f"Epoch {epoch}/{self.num_epochs} - Train Loss: {train_loss:.4f} - Val Loss: {val_loss:.4f}\n")
+                f.write(f"Epoch {epoch}/{self.num_epochs} - Train Loss: {train_loss:.4f} - Val Loss: {val_loss:.4f} - LR: {new_lr:.2e}\n")
 
             if (
                 val_loss
@@ -345,6 +436,11 @@ class BaseTrainer(ABC):
                 "optimizer_state_dict":
                     self.optimizer.state_dict(),
 
+                "scheduler_state_dict":
+                    self.scheduler.state_dict()
+                    if self.scheduler is not None
+                    else None,
+
                 "best_val_loss":
                     self.best_val_loss
             },
@@ -382,6 +478,15 @@ class BaseTrainer(ABC):
                 "optimizer_state_dict"
             ]
         )
+
+        # Restore scheduler state nếu có
+        if (
+            self.scheduler is not None
+            and checkpoint.get("scheduler_state_dict") is not None
+        ):
+            self.scheduler.load_state_dict(
+                checkpoint["scheduler_state_dict"]
+            )
 
         self.best_val_loss = (
 

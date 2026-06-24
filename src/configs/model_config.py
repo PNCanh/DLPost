@@ -5,341 +5,137 @@ Model Configurations
 
 # Cấu hình đầy đủ cho một pipeline multimodal
 TRAINING_CONFIGS = {
-
-    # ============================================================
-    # BASELINE: CLS pooling + Attention fusion + CE/BCE loss
-    # ============================================================
     "baseline": {
-        "run_name": "baseline_cls_attention_ce",
-        "text_model": "phobert",
-        "image_model": "resnet",
-        "pooling_strategy": "cls",
-        "fusion_strategy": "attention",
-        "loss": {
-            "binary": {"type": "bce"},
-            "multiclass": {"type": "ce"},
-            "explanation": {"type": "bce"},
-            "weights": {
-                "binary": 1.0,
-                "multiclass": 1.0,
-                "explanation": 0.5
-            }
-        },
-        "training": {
-            "learning_rate": 2e-5,
-            "batch_size": 16,
-            "epochs": 10,
-            "early_stopping": 8,
-            "mixed_precision": True,
-            "checkpoint_dir": "checkpoints"
+    "run_name": "baseline_phobert_resnet",
+
+    "text_model": "phobert",
+    "image_model": "resnet",
+
+    "pooling_strategy": "cls",
+    "fusion_strategy": "attention",
+
+    "loss": {
+        "binary": {"type": "bce"},
+        "multiclass": {"type": "ce"},
+        "explanation": {"type": "bce"},
+        "weights": {
+            "binary": 1.0,
+            "multiclass": 1.0,
+            "explanation": 0.5
         }
     },
 
-    # ============================================================
-    # NHÓM 1: THAY CÁCH LẤY VECTOR ĐẶC TRƯNG
-    # ============================================================
+    "training": {
+        "learning_rate": 2e-5,
+        "batch_size": 16,
+        "epochs": 15,
+        "early_stopping": 5,
+        "mixed_precision": True,
+        "checkpoint_dir": "checkpoints",
+        "scheduler": "cosine",
+        "warmup_ratio": 0.1
+    }
+},
 
-    # --- Attention Pooling ---
-    # Thay CLS vector bằng attention-weighted sum toàn bộ hidden states
-    "attention_pooling": {
-        "run_name": "attn_pool_attention_ce",
-        "text_model": "phobert",
-        "image_model": "resnet",
-        "pooling_strategy": "attention_pooling",
-        "fusion_strategy": "attention",
-        "loss": {
-            "binary": {"type": "bce"},
-            "multiclass": {"type": "ce"},
-            "explanation": {"type": "bce"},
-            "weights": {
-                "binary": 1.0,
-                "multiclass": 1.0,
-                "explanation": 0.5
-            }
+"production_candidate": {
+    "run_name": "phobert_resnet_gated_focal",
+
+    "text_model": "phobert",
+    "image_model": "resnet",
+
+    "pooling_strategy": "gated_cls",
+    "fusion_strategy": "gated",
+
+    "loss": {
+        "gated": True,
+
+        "binary": {
+            "type": "binary_focal",
+            "alpha": 0.5,
+            "gamma": 2.0
         },
-        "training": {
-            "learning_rate": 2e-5,
-            "batch_size": 16,
-            "epochs": 10,
-            "early_stopping": 8,
-            "mixed_precision": True,
-            "checkpoint_dir": "checkpoints"
+
+        "multiclass": {
+            "type": "focal",
+            "alpha": 1.0,
+            "gamma": 2.0
+        },
+
+        "explanation": {
+            "type": "binary_focal",
+            "alpha": 0.5,
+            "gamma": 2.0
+        },
+
+        "weights": {
+            "binary": 1.0,
+            "multiclass": 1.5,
+            "explanation": 1.0
         }
     },
 
-    # --- Gated CLS + Attention Pooling ---
-    # Kết hợp CLS và attention pooling qua learned gate
-    "gated_cls_pooling": {
-        "run_name": "gated_cls_gated_ce",
-        "text_model": "phobert",
-        "image_model": "resnet",
-        "pooling_strategy": "gated_cls",
-        "fusion_strategy": "gated",
-        "loss": {
-            "binary": {"type": "bce"},
-            "multiclass": {"type": "ce"},
-            "explanation": {"type": "bce"},
-            "weights": {
-                "binary": 1.0,
-                "multiclass": 1.0,
-                "explanation": 0.5
-            }
+    "training": {
+        "learning_rate": 1e-5,
+        "batch_size": 16,
+        "epochs": 15,
+        "early_stopping": 5,
+        "mixed_precision": True,
+        "checkpoint_dir": "checkpoints",
+        "scheduler": "cosine",
+        "warmup_ratio": 0.1
+    }
+},
+
+"best_experiment": {
+    "run_name": "xlmr_conditional_weighted",
+
+    "text_model": "xlmr",
+    "image_model": "vit",
+
+    "pooling_strategy": "attention_pooling",
+    "fusion_strategy": "conditional_attention",
+
+    "loss": {
+        "gated": True,
+
+        "binary": {
+            "type": "binary_focal",
+            "alpha": 0.5,
+            "gamma": 2.0
         },
-        "training": {
-            "learning_rate": 2e-5,
-            "batch_size": 16,
-            "epochs": 10,
-            "early_stopping": 8,
-            "mixed_precision": True,
-            "checkpoint_dir": "checkpoints"
+
+        "multiclass": {
+            "type": "risk_weighted_ce",
+            "num_classes": 8
+        },
+
+        "explanation": {
+            "type": "weighted_bce",
+            "pos_weights": [1.0] * 10
+        },
+
+        "weights": {
+            "binary": 1.0,
+            "multiclass": 1.5,
+            "explanation": 1.0
         }
     },
 
-    # --- Conditional Attention ---
-    # Vector w phụ thuộc vào aspect (keyword_vector)
-    "conditional_attention": {
-        "run_name": "cls_cond_attn_ce",
-        "text_model": "phobert",
-        "image_model": "resnet",
-        "pooling_strategy": "cls",
-        "fusion_strategy": "conditional_attention",
-        "loss": {
-            "binary": {"type": "bce"},
-            "multiclass": {"type": "ce"},
-            "explanation": {"type": "bce"},
-            "weights": {
-                "binary": 1.0,
-                "multiclass": 1.0,
-                "explanation": 0.5
-            }
-        },
-        "training": {
-            "learning_rate": 2e-5,
-            "batch_size": 16,
-            "epochs": 10,
-            "early_stopping": 8,
-            "mixed_precision": True,
-            "checkpoint_dir": "checkpoints"
-        }
-    },
-
-    # ============================================================
-    # NHÓM 2: THAY HÀM LOSS
-    # ============================================================
-
-    # --- Gated Loss (1 điểm) ---
-    # Mask multiclass + explanation loss khi binary_label == 0 (legitimate)
-    "gated_loss": {
-        "run_name": "cls_attention_gated_loss",
-        "text_model": "phobert",
-        "image_model": "resnet",
-        "pooling_strategy": "cls",
-        "fusion_strategy": "attention",
-        "loss": {
-            "gated": True,
-            "binary": {"type": "bce"},
-            "multiclass": {"type": "ce"},
-            "explanation": {"type": "bce"},
-            "weights": {
-                "binary": 1.0,
-                "multiclass": 1.0,
-                "explanation": 0.5
-            }
-        },
-        "training": {
-            "learning_rate": 2e-5,
-            "batch_size": 16,
-            "epochs": 10,
-            "early_stopping": 8,
-            "mixed_precision": True,
-            "checkpoint_dir": "checkpoints"
-        }
-    },
-
-    # --- Weighted Loss ---
-    # Class weights dựa trên risk_level từ label metadata
-    "weighted_loss": {
-        "run_name": "cls_attention_weighted_loss",
-        "text_model": "phobert",
-        "image_model": "resnet",
-        "pooling_strategy": "cls",
-        "fusion_strategy": "attention",
-        "loss": {
-            "binary": {"type": "bce"},
-            "multiclass": {
-                "type": "risk_weighted_ce",
-                "num_classes": 8
-                # Weights tự tính từ risk_level:
-                # legitimate(0)=0.3, job_scam(5)=1.0, investment_scam(5)=1.0,
-                # sale_scam(4)=0.86, fake_image(3)=0.72, prize_scam(5)=1.0,
-                # fake_course(4)=0.86, suspicious(2)=0.58
-            },
-            "explanation": {
-                "type": "weighted_bce",
-                "pos_weights": [1.0] * 10,
-                "confidence_weights": [0.8] * 10
-            },
-            "weights": {
-                "binary": 1.0,
-                "multiclass": 1.5,
-                "explanation": 1.0
-            }
-        },
-        "training": {
-            "learning_rate": 2e-5,
-            "batch_size": 16,
-            "epochs": 10,
-            "early_stopping": 8,
-            "mixed_precision": True,
-            "checkpoint_dir": "checkpoints"
-        }
-    },
-
-    # --- Focal Loss ---
-    # Tăng trọng số mẫu khó, giảm ảnh hưởng mẫu dễ
-    "focal_loss": {
-        "run_name": "cls_attention_focal_loss",
-        "text_model": "phobert",
-        "image_model": "resnet",
-        "pooling_strategy": "cls",
-        "fusion_strategy": "attention",
-        "loss": {
-            "binary": {
-                "type": "binary_focal",
-                "alpha": 0.25,
-                "gamma": 2.0
-            },
-            "multiclass": {
-                "type": "focal",
-                "alpha": 1.0,
-                "gamma": 2.0
-            },
-            "explanation": {
-                "type": "binary_focal",
-                "alpha": 0.25,
-                "gamma": 2.0
-            },
-            "weights": {
-                "binary": 1.0,
-                "multiclass": 1.0,
-                "explanation": 0.5
-            }
-        },
-        "training": {
-            "learning_rate": 1e-5,
-            "batch_size": 16,
-            "epochs": 10,
-            "early_stopping": 8,
-            "mixed_precision": True,
-            "checkpoint_dir": "checkpoints"
-        }
-    },
-
-    # ============================================================
-    # COMBINED: Kết hợp tốt nhất (ví dụ)
-    # ============================================================
-
-    # ViBERT + ViT + Gated fusion + Focal loss
-    "modelSetting1": {
-        "run_name": "vibert_vit_gated_focal",
-        "text_model": "vibert",
-        "image_model": "vit",
-        "pooling_strategy": "gated_cls",
-        "fusion_strategy": "gated",
-        "loss": {
-            "binary": {"type": "binary_focal", "alpha": 0.25, "gamma": 2.0},
-            "multiclass": {"type": "focal", "alpha": 1.0, "gamma": 2.0},
-            "explanation": {"type": "weighted_bce", "pos_weights": [0.8] * 10},
-            "weights": {
-                "binary": 1.0,
-                "multiclass": 1.5,
-                "explanation": 1.0
-            }
-        },
-        "training": {
-            "learning_rate": 1e-5,
-            "batch_size": 16,
-            "epochs": 10,
-            "early_stopping": 8,
-            "mixed_precision": True,
-            "checkpoint_dir": "checkpoints"
-        }
-    },
-
-    # XLM-R + ViT + Conditional Attention + Gated Loss + Weighted CE
-    "modelSetting2": {
-        "run_name": "xlmr_vit_cond_attn_gated_weighted",
-        "text_model": "xlmr",
-        "image_model": "vit",
-        "pooling_strategy": "attention_pooling",
-        "fusion_strategy": "conditional_attention",
-        "loss": {
-            "gated": True,
-            "binary": {"type": "binary_focal", "alpha": 0.25, "gamma": 2.0},
-            "multiclass": {
-                "type": "risk_weighted_ce",
-                "num_classes": 8
-            },
-            "explanation": {"type": "weighted_bce", "pos_weights": [0.8] * 10},
-            "weights": {
-                "binary": 1.0,
-                "multiclass": 1.0,
-                "explanation": 1.0
-            }
-        },
-        "training": {
-            "learning_rate": 1e-5,
-            "batch_size": 16,
-            "epochs": 10,
-            "early_stopping": 8,
-            "mixed_precision": True,
-            "checkpoint_dir": "checkpoints"
-        }
+    "training": {
+        "learning_rate": 1e-5,
+        "batch_size": 8,
+        "epochs": 20,
+        "early_stopping": 7,
+        "mixed_precision": True,
+        "checkpoint_dir": "checkpoints",
+        "scheduler": "cosine",
+        "warmup_ratio": 0.1
     }
 }
+}
 
-
-"""
-INSTRUCTIONS FOR ADJUSTMENTS (For Grading / Experimentation):
-
-Nhóm 1: Thay cách lấy vector đặc trưng
-- Attention pooling (1 điểm): Đặt pooling_strategy: "attention_pooling".
-  Module: src/models/pooling/attention_pooling.py
-  Tính attention weights trên toàn bộ token hidden states, dùng weighted sum thay CLS.
-
-- Gated fusion (1 điểm): Đặt pooling_strategy: "gated_cls".
-  Module: src/models/pooling/gated_pooling.py
-  Kết hợp CLS + attention pooling qua gate: g*CLS + (1-g)*attn_pool.
-
-- Conditional attention (2 điểm): Đặt fusion_strategy: "conditional_attention".
-  Module: src/models/fusion/conditional_attention.py
-  Vector w phụ thuộc vào keyword_vector (aspect), không cố định.
-
-Nhóm 2: Thay hàm loss
-- Gated loss (1 điểm): Đặt loss.gated: true.
-  Module: src/losses/gated_loss.py
-  Nếu binary_label == 0 → mask multiclass_loss = 0 và explanation_loss = 0.
-
-- Weighted loss (1 điểm): Đặt multiclass loss type: "risk_weighted_ce".
-  Module: src/losses/weighted_loss.py
-  Tự tính class weights từ risk_level. Nhãn risk thấp → weight thấp.
-
-- Focal loss (2 điểm): Đặt loss type: "focal" hoặc "binary_focal".
-  Module: src/losses/focal_loss.py
-  Tăng trọng số mẫu khó (1-pt)^gamma, giảm ảnh hưởng mẫu dễ.
-"""
-# ============================================================
-# CHỌN CÁC CONFIG ĐỂ TRAIN KHI CHẠY main.py
-# Thêm/bớt tên config trong list này để chọn model cần train
-# ============================================================
 DEFAULT_CONFIGS = [
     "baseline",
-    # "attention_pooling",
-    # "gated_cls_pooling",
-    # "conditional_attention",
-    # "gated_loss",
-    # "weighted_loss",
-    # "focal_loss",
-    # "modelSetting1",
-    # "modelSetting2",
+    # "production_candidate",
+    # "best_experiment"
 ]
