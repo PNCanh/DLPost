@@ -1,141 +1,89 @@
 """
-Model Configurations
+Model Configuration
 
+Định nghĩa các cấu hình cho các pipeline huấn luyện và mô hình.
+Người dùng có thể chọn cấu hình mong muốn để chạy trong main.py
 """
 
-# Cấu hình đầy đủ cho một pipeline multimodal
-TRAINING_CONFIGS = {
+CONFIGS = {
     "baseline": {
-    "run_name": "baseline_phobert_resnet",
-
-    "text_model": "phobert",
-    "image_model": "resnet",
-
-    "pooling_strategy": "cls",
-    "fusion_strategy": "attention",
-
-    "loss": {
-        "binary": {"type": "bce"},
-        "multiclass": {"type": "ce"},
-        "explanation": {"type": "bce"},
-        "weights": {
+        "run_name": "baseline_phobert_resnet",
+        "model_type": "baseline",
+        
+        "ocr": {
+            "enabled": True,
+            "languages": ["vi", "en"],
+            "gpu": True
+        },
+        
+        "training": {
+            "batch_size": 16,
+            "learning_rate": 2e-5,
+            "epochs": 10,
+            "adversarial": "none", # "none", "fgm", "fgd", "awp"
+            "weight_decay": 0.01,
+            "layer_wise_lr": True,
+        },
+        
+        "loss_weights": {
             "binary": 1.0,
             "multiclass": 1.0,
             "explanation": 0.5
         }
     },
-
-    "training": {
-        "learning_rate": 2e-5,
-        "batch_size": 16,
-        "epochs": 15,
-        "early_stopping": 5,
-        "mixed_precision": True,
-        "checkpoint_dir": "checkpoints",
-        "scheduler": "cosine",
-        "warmup_ratio": 0.1
-    }
-},
-
-"production_candidate": {
-    "run_name": "phobert_resnet_gated_focal",
-
-    "text_model": "phobert",
-    "image_model": "resnet",
-
-    "pooling_strategy": "gated_cls",
-    "fusion_strategy": "gated",
-
-    "loss": {
-        "gated": True,
-
-        "binary": {
-            "type": "binary_focal",
-            "alpha": 0.5,
-            "gamma": 2.0
+    
+    "variant_a": {
+        "run_name": "variant_a_xlmr_vit",
+        "model_type": "variant_a",
+        
+        "ocr": {
+            "enabled": True,
+            "languages": ["vi", "en"],
+            "gpu": True
         },
-
-        "multiclass": {
-            "type": "focal",
-            "alpha": 1.0,
-            "gamma": 2.0
+        
+        "training": {
+            "batch_size": 8,
+            "learning_rate": 1e-5,
+            "epochs": 10,
+            "adversarial": "fgm",
+            "weight_decay": 0.01,
+            "layer_wise_lr": True,
         },
-
-        "explanation": {
-            "type": "binary_focal",
-            "alpha": 0.5,
-            "gamma": 2.0
-        },
-
-        "weights": {
+        
+        "loss_weights": {
             "binary": 1.0,
             "multiclass": 1.5,
             "explanation": 1.0
         }
     },
-
-    "training": {
-        "learning_rate": 1e-5,
-        "batch_size": 16,
-        "epochs": 15,
-        "early_stopping": 5,
-        "mixed_precision": True,
-        "checkpoint_dir": "checkpoints",
-        "scheduler": "cosine",
-        "warmup_ratio": 0.1
-    }
-},
-
-"best_experiment": {
-    "run_name": "xlmr_conditional_weighted",
-
-    "text_model": "xlmr",
-    "image_model": "vit",
-
-    "pooling_strategy": "attention_pooling",
-    "fusion_strategy": "conditional_attention",
-
-    "loss": {
-        "gated": True,
-
-        "binary": {
-            "type": "binary_focal",
-            "alpha": 0.5,
-            "gamma": 2.0
+    
+    "variant_b": {
+        "run_name": "variant_b_vibert_resnet",
+        "model_type": "variant_b",
+        
+        "ocr": {
+            "enabled": True,
+            "languages": ["vi", "en"],
+            "gpu": True
         },
-
-        "multiclass": {
-            "type": "risk_weighted_ce",
-            "num_classes": 8
+        
+        "training": {
+            "batch_size": 16,
+            "learning_rate": 2e-5,
+            "epochs": 10,
+            "adversarial": "none",
+            "weight_decay": 0.01,
+            "layer_wise_lr": True,
         },
-
-        "explanation": {
-            "type": "weighted_bce",
-            "pos_weights": [1.0] * 10
-        },
-
-        "weights": {
+        
+        "loss_weights": {
             "binary": 1.0,
-            "multiclass": 1.5,
-            "explanation": 1.0
+            "multiclass": 1.0,
+            "explanation": 0.5
         }
-    },
-
-    "training": {
-        "learning_rate": 1e-5,
-        "batch_size": 8,
-        "epochs": 20,
-        "early_stopping": 7,
-        "mixed_precision": True,
-        "checkpoint_dir": "checkpoints",
-        "scheduler": "cosine",
-        "warmup_ratio": 0.1
     }
 }
-}
 
-DEFAULT_CONFIGS = [
-    "baseline",
-    "production_candidate",
-    "best_experiment"
-]
+# Chọn config active để chạy
+ACTIVE_CONFIG = "baseline"

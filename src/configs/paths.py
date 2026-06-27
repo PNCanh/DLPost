@@ -10,9 +10,9 @@ Output structure:
 ├── outputs/
 │   ├── checkpoints/        ← model weights (.pth, .h5)
 │   ├── logs/               ← training logs
-│   └── predictions/        ← kết quả dự đoán
-│       ├── figures/        ← biểu đồ, charts
-│       └── metrics/        ← file CSV kết quả
+│   ├── predictions/        ← kết quả dự đoán
+│   ├── figures/        ← biểu đồ, charts
+│   └── metrics/        ← file CSV kết quả
 """
 
 import os
@@ -117,9 +117,9 @@ EXPLANATION_LABELS_FILE = (
     "explanation_labels.json"
 )
 
-SCAM_KEYWORDS_FILE = (
+KEYWORDS_FILE = (
     RESOURCE_DIR /
-    "scam_keywords.json"
+    "keywords.json"
 )
 
 TEENCODE_FILE = (
@@ -134,7 +134,7 @@ ABBREVIATIONS_FILE = (
 
 STOPWORDS_FILE = (
     RESOURCE_DIR /
-    "stopwords.txt"
+    "stopwords.json"
 )
 
 # =========================

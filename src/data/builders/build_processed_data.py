@@ -12,8 +12,6 @@ from data.builders.dataset_validator import (
     DatasetValidator
 )
 
-
-
 from data.loaders.post_loader import (
     load_post_json
 )
