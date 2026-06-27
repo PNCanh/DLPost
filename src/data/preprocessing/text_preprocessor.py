@@ -4,11 +4,11 @@ from pathlib import Path
 from configs import paths
 
 class TextPreprocessor:
-    def __init__(self):
+    def __init__(self, teencode_file=None, abbreviations_file=None):
         # Tải các từ điển
         self.keywords = self._load_dict(paths.KEYWORDS_FILE)
-        self.teencode = self._load_dict(paths.TEENCODE_FILE)
-        self.abbreviations = self._load_dict(paths.ABBREVIATIONS_FILE)
+        self.teencode = self._load_dict(teencode_file or paths.TEENCODE_FILE)
+        self.abbreviations = self._load_dict(abbreviations_file or paths.ABBREVIATIONS_FILE)
         self.stopwords = self._load_dict(paths.STOPWORDS_FILE)
         
         # Stopwords thường là list, nếu là dict thì lấy keys
