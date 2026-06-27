@@ -7,7 +7,7 @@ from configs import paths
 def load_keywords():
 
     with open(
-        paths.SCAM_KEYWORDS_FILE,
+        paths.KEYWORDS_FILE,
         encoding="utf8"
     ) as f:
 
